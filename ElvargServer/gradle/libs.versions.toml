@@ -7,7 +7,7 @@ gson = "_"
 kotlinxSerializationCore = "_"
 kotlin = "1.8.10"
 caffeine = "3.1.1"
-nettyAll = "4.1.72.Final"
+nettyAll = "4.1.136.Final"
 
 [libraries]
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4jApi" }
@@ -26,12 +26,12 @@ classgraph = { group = "io.github.classgraph", name  = "classgraph", version = "
 joda = { group = "joda-time", name = "joda-time", version = "2.11.0" }
 netty-all = { group = "io.netty", name = "netty-all", version.ref = "nettyAll" }
 
-guava = { group = "com.google.guava", name = "guava", version = "31.0.1-jre" }
+guava = { group = "com.google.guava", name = "guava", version = "33.6.0-jre" }
 
 progress-bar = { group = "me.tongfei", name = "progressbar", version = "0.9.3" }
 inline-loggerr = { group = "com.michael-bull.kotlin-inline-logger", name = "kotlin-inline-logger", version = "1.0.4" }
 
-okhttp3 = { group = "com.squareup.okhttp3", name = "okhttp", version = "5.0.0-alpha.11" }
+okhttp3 = { group = "com.squareup.okhttp3", name = "okhttp", version = "4.12.0" }
 
 password4J = { group = "com.password4j", name = "password4j", version = "1.6.0" }
 

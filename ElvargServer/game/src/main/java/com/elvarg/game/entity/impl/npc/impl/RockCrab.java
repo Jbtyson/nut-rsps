@@ -7,7 +7,6 @@ import com.elvarg.game.entity.impl.player.Player;
 import com.elvarg.game.model.Animation;
 import com.elvarg.game.model.Ids;
 import com.elvarg.game.model.Location;
-import org.checkerframework.checker.units.qual.A;
 
 import static com.elvarg.util.NpcIdentifiers.*;
 

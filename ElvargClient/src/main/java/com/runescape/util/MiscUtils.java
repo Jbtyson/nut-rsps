@@ -1,28 +1,51 @@
 package com.runescape.util;
 
-import java.lang.reflect.Method;
+import java.awt.Desktop;
+import java.net.URI;
 
 public final class MiscUtils {
 
     public static void launchURL(String url) {
-        String osName = System.getProperty("os.name");
+        if (url == null) {
+            return;
+        }
+        final URI uri;
+        final String scheme;
         try {
-            if (osName.startsWith("Mac OS")) {
-                Runtime.getRuntime().exec("open " + url);
-            } else if (osName.startsWith("Windows"))
-                Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + url);
-            else {
-                String[] browsers = {"firefox", "opera", "konqueror", "epiphany", "mozilla",
+            uri = new URI(url.trim());
+            scheme = uri.getScheme();
+        } catch (Exception ex) {
+            System.err.println("Refusing to open malformed URL: " + url);
+            return;
+        }
+        // SECURITY: only ever open http(s) URLs. Never pass server-supplied strings
+        // to a shell/file handler — that allowed remote code execution (e.g. UNC
+        // paths to executables) via the SEND_URL packet.
+        if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
+            System.err.println("Refusing to open non-http(s) URL: " + url);
+            return;
+        }
+        try {
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                Desktop.getDesktop().browse(uri);
+                return;
+            }
+            // Headless/unsupported fallback: array-form exec (no shell) with a URL
+            // already validated to be http(s), so no argument injection is possible.
+            String osName = System.getProperty("os.name");
+            if (osName.startsWith("Windows")) {
+                Runtime.getRuntime().exec(new String[]{"rundll32", "url.dll,FileProtocolHandler", uri.toString()});
+            } else if (osName.startsWith("Mac OS")) {
+                Runtime.getRuntime().exec(new String[]{"open", uri.toString()});
+            } else {
+                String[] browsers = {"xdg-open", "firefox", "opera", "konqueror", "epiphany", "mozilla",
                         "netscape", "safari"};
-                String browser = null;
-                for (int count = 0; count < browsers.length && browser == null; count++)
-                    if (Runtime.getRuntime().exec(new String[]{"which", browsers[count]})
-                            .waitFor() == 0)
-                        browser = browsers[count];
-                if (browser == null) {
-                    throw new Exception("Could not find web browser");
-                } else
-                    Runtime.getRuntime().exec(new String[]{browser, url});
+                for (String browser : browsers) {
+                    if (Runtime.getRuntime().exec(new String[]{"which", browser}).waitFor() == 0) {
+                        Runtime.getRuntime().exec(new String[]{browser, uri.toString()});
+                        return;
+                    }
+                }
             }
         } catch (Exception ex) {
             ex.printStackTrace();

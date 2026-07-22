@@ -97,6 +97,12 @@ public class GameConstants {
 	public static final boolean DEBUG_ATTACK_DISTANCE = false;
 
 	/**
+	 * Enables developer/stress tooling such as the login flooder. Must remain
+	 * disabled in production; overridable via the ELVARG_DEV_TOOLS env variable.
+	 */
+	public static final boolean DEV_TOOLS_ENABLED = Boolean.parseBoolean(System.getenv().getOrDefault("ELVARG_DEV_TOOLS", "false"));
+
+	/**
 	 * The gameframe's tab interface ids.
 	 */
 	public static final int TAB_INTERFACES[] = { 2423, 3917, 31000, 3213, 1644, 5608, -1, 37128, 5065, 5715, 2449,
@@ -153,8 +159,11 @@ public class GameConstants {
 			new PlayerBotDefinition("Bot F2P Pure", new Location(3096, 3530), new F2PMeleeFighterPreset()),
 	};
 
-	// The password for every player bot account
-	public static String PLAYER_BOT_PASSWORD = "wirfunerpro4n!1";
+	// The password for every player bot account. Sourced from the PLAYER_BOT_PASSWORD
+	// environment variable; falls back to a random per-run value so no credential is
+	// hardcoded in source. Player bots are internal and bound to 127.0.0.1.
+	public static String PLAYER_BOT_PASSWORD = Optional.ofNullable(System.getenv("PLAYER_BOT_PASSWORD"))
+			.filter(s -> !s.isBlank()).orElse(UUID.randomUUID().toString());
 
 	// The list of roles who can "steal" a bot from any player
 	public static List<PlayerRights> PLAYER_BOT_OVERRIDE = Arrays.asList(PlayerRights.MODERATOR, PlayerRights.ADMINISTRATOR, PlayerRights.DEVELOPER, PlayerRights.OWNER);

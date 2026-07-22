@@ -5,6 +5,7 @@ import com.elvarg.game.definition.ItemDefinition;
 import com.elvarg.game.entity.impl.player.Player;
 import com.elvarg.game.model.areas.impl.WildernessArea;
 import com.elvarg.game.model.container.impl.Bank;
+import com.elvarg.game.model.rights.PlayerRights;
 import com.elvarg.net.packet.Packet;
 import com.elvarg.net.packet.PacketExecutor;
 
@@ -16,12 +17,26 @@ import com.elvarg.net.packet.PacketExecutor;
 
 public class SpawnItemPacketListener implements PacketExecutor {
 
+    /**
+     * SECURITY: item spawning is a staff-only capability (mirrors the ::item
+     * command). Without this check any client could spawn ALLOWED_SPAWNS items
+     * directly via the spawn-tab packet, minting items and — by alching/selling
+     * them — unlimited coins.
+     */
+    private static boolean canSpawn(Player player) {
+        PlayerRights rights = player.getRights();
+        return rights == PlayerRights.OWNER || rights == PlayerRights.DEVELOPER;
+    }
+
     public static void spawn(Player player, int item, int amount, boolean toBank) {
+
+        if (!canSpawn(player)) {
+            player.getPacketSender().sendMessage("You do not have permission to spawn items.");
+            return;
+        }
 
         if (amount < 0) {
             return;
-        } else if (amount > Integer.MAX_VALUE) {
-            amount = Integer.MAX_VALUE;
         }
 
         // Check if player busy..
@@ -65,6 +80,11 @@ public class SpawnItemPacketListener implements PacketExecutor {
         final int item = packet.readInt();
         final boolean spawnX = packet.readByte() == 1;
         final boolean toBank = packet.readByte() == 1;
+
+        if (!canSpawn(player)) {
+            player.getPacketSender().sendMessage("You do not have permission to spawn items.");
+            return;
+        }
 
         ItemDefinition def = ItemDefinition.forId(item);
         if (def == null) {

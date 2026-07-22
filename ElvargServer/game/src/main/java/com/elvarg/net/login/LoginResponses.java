@@ -5,6 +5,7 @@ import com.elvarg.game.World;
 import com.elvarg.game.entity.impl.player.Player;
 import com.elvarg.util.DiscordUtil;
 import com.elvarg.util.Misc;
+import com.elvarg.util.PasswordUtil;
 import com.elvarg.util.PlayerPunishment;
 
 import java.io.IOException;
@@ -169,6 +170,11 @@ public final class LoginResponses {
         }
 
         playerSave.applyToPlayer(player);
+
+        // Migrate legacy plaintext passwords to a salted hash upon successful login.
+        if (!PasswordUtil.isHashed(playerSave.getPasswordHashWithSalt())) {
+            player.setPasswordHashWithSalt(PLAYER_PERSISTENCE.encryptPassword(plainPassword));
+        }
 
         return LoginResponses.LOGIN_SUCCESSFUL;
     }

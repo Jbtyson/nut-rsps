@@ -22,12 +22,15 @@ public class DiscordOAuth {
     private Thread runner;
     private Function<String, Void> callback;
 
+    // Unguessable value used to defend the OAuth callback against login CSRF.
+    private final String state = java.util.UUID.randomUUID().toString().replace("-", "");
+
     public static DiscordOAuth getInstance() {
         return instance;
     }
 
     public static String getOAuthUrl() {
-        return "https://discord.com/api/oauth2/authorize?client_id=" + DiscordConfiguration.CLIENT_ID + "&redirect_uri=http%3A%2F%2Flocalhost%3A8080&response_type=code&scope=identify";
+        return "https://discord.com/api/oauth2/authorize?client_id=" + DiscordConfiguration.CLIENT_ID + "&redirect_uri=http%3A%2F%2Flocalhost%3A8080&response_type=code&scope=identify&state=" + instance.state;
     }
 
     /**
@@ -37,7 +40,9 @@ public class DiscordOAuth {
     class DiscordOAuthListener extends NanoHTTPD {
         private DiscordOAuth parent;
         public DiscordOAuthListener(DiscordOAuth parent) {
-            super(8080);
+            // Bind to loopback only so the callback listener is not reachable from
+            // other hosts on the network.
+            super("127.0.0.1", 8080);
             this.parent = parent;
         }
 
@@ -49,6 +54,11 @@ public class DiscordOAuth {
 
             Map<String, List<String>> params = session.getParameters();
             if (params.containsKey("code")) {
+                // Validate the CSRF state parameter before accepting the code.
+                List<String> stateParam = params.get("state");
+                if (stateParam == null || stateParam.isEmpty() || !parent.state.equals(stateParam.get(0))) {
+                    return NanoHTTPD.newFixedLengthResponse(Response.Status.FORBIDDEN, "text/plain", "Invalid state");
+                }
                 String code = params.get("code").get(0);
                 this.parent.callback(code);
             }

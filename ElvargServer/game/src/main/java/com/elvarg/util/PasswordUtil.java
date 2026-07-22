@@ -9,7 +9,30 @@ import java.util.Base64;
 
 public class PasswordUtil {
 
-    private static PBKDF2Function pbkdf2 = PBKDF2Function.getInstance(Hmac.SHA512, 5000, 512);
+    // OWASP-recommended work factor for PBKDF2-HMAC-SHA512 (>= 210,000 iterations).
+    private static PBKDF2Function pbkdf2 = PBKDF2Function.getInstance(Hmac.SHA512, 210000, 512);
+
+    /**
+     * Determines whether a stored value is in the salted-hash format produced by
+     * {@link #generatePasswordHashWithSalt(String)} (base64 salt ":" base64 hash),
+     * as opposed to a legacy plaintext password.
+     */
+    public static boolean isHashed(String value) {
+        if (value == null) {
+            return false;
+        }
+        String[] parts = value.split(":");
+        if (parts.length != 2) {
+            return false;
+        }
+        try {
+            Base64.getDecoder().decode(parts[0]);
+            Base64.getDecoder().decode(parts[1]);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
 
     public static String generatePasswordHashWithSalt(String password) {
         Hash hash = Password.hash(password).addRandomSalt().with(pbkdf2);

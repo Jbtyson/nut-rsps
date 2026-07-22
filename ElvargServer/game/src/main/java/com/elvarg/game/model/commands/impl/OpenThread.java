@@ -30,7 +30,9 @@ public class OpenThread implements Command {
 
             String link = in.readLine();
 
-            if (link != null)
+            // SECURITY: only forward http(s) links to the client. The client opens
+            // these via its URL handler, so never forward arbitrary remote content.
+            if (link != null && (link.startsWith("http://") || link.startsWith("https://")))
                 player.getPacketSender().sendURL(link);
 
             in.close();

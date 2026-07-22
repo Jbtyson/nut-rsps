@@ -45,11 +45,6 @@ public final class LoginDecoder extends ByteToMessageDecoder {
     private LoginDecoderState state = LoginDecoderState.LOGIN_REQUEST;
 
     /**
-     * The size of the encrypted data.
-     */
-    private String hostAddressOverride = null;
-
-    /**
      * Sends a response code to the client to notify the user logging in.
      *
      * @param ctx      The context of the channel handler.
@@ -101,13 +96,11 @@ public final class LoginDecoder extends ByteToMessageDecoder {
                 sendLoginResponse(ctx, LoginResponses.LOGIN_BAD_SESSION_ID);
                 return;
             }
-            int ip = buffer.readInt();
+            buffer.readInt();
 
-            hostAddressOverride = String.format("%d.%d.%d.%d",
-                    (ip & 0xff),
-                    (ip >> 8 & 0xff),
-                    (ip >> 16 & 0xff),
-                    (ip >> 24 & 0xff));
+            // SECURITY: the client-supplied IP is intentionally ignored. Trusting
+            // it would let any client spoof its source address and evade IP bans/
+            // mutes. The real socket address is always used instead.
         }
 
         // Send information to the client
@@ -211,10 +204,7 @@ public final class LoginDecoder extends ByteToMessageDecoder {
                 return;
             }
 
-            String host = hostAddressOverride;
-            if (host == null) {
-                host = ByteBufUtils.getHost(ctx.channel());
-            }
+            String host = ByteBufUtils.getHost(ctx.channel());
 
             String rawUsername = ByteBufUtils.readString(rsaBuffer);
             String password = ByteBufUtils.readString(rsaBuffer);
